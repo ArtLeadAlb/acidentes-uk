@@ -21,6 +21,8 @@ Indicadores (o dashboard lê só estas tabelas, sem calcular nada):
     (e ordem, quando a categoria tem ordem natural)
   ouro.indicador_mensal -> ano, mes, mes_referencia, acidentes,
     acidentes_fatais, vitimas
+  ouro.indicador_geral -> uma linha: acidentes, veiculos, acidentes_fatais,
+    pct_fatais, vitimas, data_inicio, data_fim
   pct_fatais = 100 * acidentes_fatais / acidentes, com 2 casas decimais.
 
 CRITÉRIOS DE ACEITE
@@ -28,6 +30,7 @@ CRITÉRIOS DE ACEITE
 - Veículo sem acidente e acidente sem veículo ficam fora da tabela única.
 - Acidente com dois veículos aparece em duas linhas da tabela única, mas conta
   uma vez em acidentes e uma vez em vitimas nos indicadores.
+- indicador_geral tem uma única linha, com cada acidente contado uma vez.
 - Fronteiras do período do dia: 05:59 Madrugada, 06:00 Manhã, 11:59 Manhã,
   12:00 Tarde, 17:59 Tarde, 18:00 Noite, 23:59 Noite.
 - Fronteiras da idade do veículo: 2 -> 0-2, 3 -> 3-5, 5 -> 3-5, 6 -> 6-10,
@@ -150,7 +153,25 @@ GROUP BY ano, mes
 """
 
 
-TABELAS_OURO = ["acidentes_veiculos", *INDICADORES, "indicador_mensal"]
+SQL_INDICADOR_GERAL = """
+CREATE OR REPLACE TABLE ouro.indicador_geral AS
+WITH acidentes AS (
+    SELECT DISTINCT id_acidente, data_acidente, gravidade, num_vitimas
+    FROM ouro.acidentes_veiculos
+)
+SELECT
+    COUNT(*) AS acidentes,
+    (SELECT COUNT(*) FROM ouro.acidentes_veiculos) AS veiculos,
+    COUNT(*) FILTER (WHERE gravidade = 'Fatal') AS acidentes_fatais,
+    ROUND(CAST(100 AS DOUBLE) * COUNT(*) FILTER (WHERE gravidade = 'Fatal') / COUNT(*), 2) AS pct_fatais,
+    CAST(SUM(num_vitimas) AS BIGINT) AS vitimas,
+    MIN(data_acidente) AS data_inicio,
+    MAX(data_acidente) AS data_fim
+FROM acidentes
+"""
+
+
+TABELAS_OURO = ["acidentes_veiculos", *INDICADORES, "indicador_mensal", "indicador_geral"]
 
 
 def _literal(caminho) -> str:
@@ -178,6 +199,7 @@ def executar() -> None:
         for nome, (categoria, ordem) in INDICADORES.items():
             con.execute(_sql_indicador(nome, categoria, ordem))
         con.execute(SQL_INDICADOR_MENSAL)
+        con.execute(SQL_INDICADOR_GERAL)
     except (duckdb.Error, ErroOuro) as erro:
         con.close()
         sys.exit(f"Ouro cancelada, nada foi alterado: {erro}")
