@@ -1,0 +1,30 @@
+[project]
+name = "acidentes-uk"
+version = "0.1.0"
+description = "Pipeline bronze/prata/ouro sobre acidentes de trânsito e veículos do Reino Unido (DfT, 2005-2017)"
+requires-python = ">=3.13"
+dependencies = [
+    "duckdb>=2.0.0",
+    "kagglehub>=1.0.3",
+]
+
+[project.scripts]
+acidentes-uk = "src:main"
+
+[tool.pytest.ini_options]
+testpaths = ["test"]
+pythonpath = ["."]
+
+[tool.coverage.run]
+source = ["."]
+omit = ["test/*", "dashboard.py", ".venv/*"]
+
+[tool.coverage.report]
+fail_under = 60
+show_missing = true
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+    "pytest-cov>=7.1.0",
+]
