@@ -1,0 +1,13 @@
+# dados: CSVs e tabelas grandes ficam de fora (o GitHub recusa arquivos acima de 100 MB)
+data/*
+!data/.gitkeep
+
+# exceção: os indicadores da ouro são minúsculos e alimentam o dashboard
+!data/ouro/
+data/ouro/*
+!data/ouro/indicador_*.parquet
+
+.venv/
+__pycache__/
+.pytest_cache/
+.coverage
