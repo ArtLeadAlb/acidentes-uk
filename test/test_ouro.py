@@ -13,7 +13,7 @@ import pytest
 from src import ouro
 
 DATA = datetime.date(2005, 1, 4)  # terça-feira
-TABELAS_OURO = ["acidentes_veiculos", *ouro.INDICADORES, "indicador_mensal"]
+TABELAS_OURO = ouro.TABELAS_OURO
 
 
 def _banco(tmp_path, monkeypatch):
@@ -218,6 +218,25 @@ def test_indicador_mensal_agrupa_por_ano_e_mes(tmp_path, monkeypatch):
         (2005, 1, datetime.date(2005, 1, 1), 2, 1, 3),
         (2005, 2, datetime.date(2005, 2, 1), 1, 0, 4),
     ]
+
+
+def test_indicador_geral_tem_uma_linha_com_os_totais(tmp_path, monkeypatch):
+    con = _banco(tmp_path, monkeypatch)
+    # A1: fatal, dois veículos, três vítimas
+    _acidente(con, "A1", data=datetime.date(2005, 1, 10), gravidade="Fatal", vitimas=3)
+    _veiculo(con, "A1", ref=1)
+    _veiculo(con, "A1", ref=2)
+    # A2: leve, um veículo, uma vítima, em outra data
+    _acidente(con, "A2", data=datetime.date(2005, 3, 5), gravidade="Leve", vitimas=1)
+    _veiculo(con, "A2")
+    _gravar_prata(con)
+
+    ouro.executar()
+
+    assert _consultar(
+        "SELECT acidentes, veiculos, acidentes_fatais, pct_fatais, vitimas, data_inicio, data_fim "
+        "FROM ouro.indicador_geral"
+    ) == [(2, 3, 1, 50.0, 4, datetime.date(2005, 1, 10), datetime.date(2005, 3, 5))]
 
 
 def test_tabelas_da_ouro_sao_gravadas_em_parquet(tmp_path, monkeypatch):

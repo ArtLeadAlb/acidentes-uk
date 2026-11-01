@@ -25,6 +25,17 @@ uv run python -m src.prata
 uv run python -m src.ouro
 ```
 
+## Dashboard
+
+```bash
+uv add streamlit
+uv run streamlit run dashboard.py
+```
+
+O dashboard lê só `data/ouro/indicador_*.parquet` e não calcula nada na tela.
+Esses arquivos são pequenos e ficam versionados, então ele roda logo após o
+clone, sem precisar executar o pipeline.
+
 ## Testes
 
 ```bash
