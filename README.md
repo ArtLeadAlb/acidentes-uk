@@ -42,4 +42,6 @@ clone, sem precisar executar o pipeline.
 uv run pytest --cov
 ```
 
-Os testes usam dado inventado dentro de `tmp_path` e nunca abrem `data/`.
+<img width="1450" height="532" alt="PrintTest" src="https://github.com/user-attachments/assets/87e4fb89-1691-4418-95e6-f1624c441b2f" />
+
+
